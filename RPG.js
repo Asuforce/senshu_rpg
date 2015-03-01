@@ -1,5 +1,8 @@
 var stage;
 var message;
+var message_f;
+var graphics; 
+var triangle1; var triangle2;
 var queue = new createjs.LoadQueue(true);
 var character;
 
@@ -31,7 +34,7 @@ function init() {
     stage = new createjs.Stage(myCanvas);
     message = new createjs.Text("Now Loading... ", "24px Arial", "#ffffff");
     stage.addChild(message);
-    message.x = myCanvas.width/2; message.y = myCanvas.height/2;
+    message.x = myCanvas.width/3; message.y = myCanvas.height/2;
 
     stage.update();
 
@@ -43,7 +46,35 @@ function init() {
 
     queue.addEventListener("progress", progressLoad);
     queue.loadManifest(manifest);                        //データを取得するときはquere.getResult()
-    queue.addEventListener("complete", mapLoad);      //loadManifestが終わったら実行される
+    queue.addEventListener("complete", mapLoad);    
+
+    //三角形表示
+    graphics = new createjs.Graphics();
+    graphics.beginStroke("#cccccc"); // 色の指定（線と塗りつぶしとそれぞれ色を指定する）
+    graphics.beginFill("#7aeac8");
+    graphics
+        .moveTo(-30,0)
+        .lineTo(50,60)
+        .lineTo(100,-20)
+        .closePath();
+
+    triangle1 = new createjs.Shape(graphics);
+
+    graphics = new createjs.Graphics();
+    graphics.beginStroke("#aaaaaa"); // 色の指定（線と塗りつぶしとそれぞれ色を指定する）
+    graphics.beginFill("#ca7a98");
+    graphics
+        .moveTo(0,25)
+        .lineTo(85,35)
+        .lineTo(25,-70)
+        .closePath();
+
+    triangle2 = new createjs.Shape(graphics);
+
+    var myPlayer = document.getElementById('musicplayer');
+    myPlayer.loop = true;
+    myPlayer.play()
+    //console.log(myPlayer.currentTime);
 }
 
 //画像ファイルロードの進捗をパーセンテージで表わす
@@ -142,6 +173,16 @@ function mapLoad(event){
     stage.addChild(backgroundMap);
     stage.addChild(foregroundMap);
     stage.addChild(character);
+
+    triangle1.x = myCanvas.width-100; triangle1.y = myCanvas.height-40;
+    triangle2.x = myCanvas.width-110; triangle2.y = myCanvas.height-40;
+
+    message_f = new createjs.Text(thisfloor+"階", "30px serif", "#ffffff");
+    message_f.x = myCanvas.width-100; message_f.y = myCanvas.height-50;
+
+    stage.addChild(triangle1);
+    stage.addChild(triangle2);
+    stage.addChild(message_f);
 }
 
 function changeFloor(cnt) {
@@ -195,6 +236,7 @@ function changeFloor(cnt) {
     }
     floorX = mapLowLayerData[0].length;
     floorY = mapLowLayerData.length;
+
     mapLoad();
 }
 
@@ -202,6 +244,7 @@ function position(posX, posY) {
     console.log("thisfloor is " + thisfloor);
     charaX = posX;
     charaY = posY;
+    prevDirection = 4; //エリア移動した直後の向き矯正
     moveMap();
 }
 
@@ -244,9 +287,6 @@ function handleKeyUp(event) {
 }
 
 function tick(){
-	var myPlayer = document.getElementById('musicplayer');
-	myPlayer.play()
-	//console.log(myPlayer.currentTime);
     if (charaX % 1 === 0 && ( charaY % 1) === 0) { //+16は操作キャラの32ドット超の部分
         direction = 4; //止まる
 
@@ -308,7 +348,15 @@ function tick(){
     		changeFloor(1);
 	        position(19, 28);
     	    character.gotoAndPlay("up");
-    	};
+    	} else if (charaX == 18 && charaY == 15) {
+            changeFloor(1);
+            position(18, 10);
+            character.gotoAndPlay("up");
+        } else if (charaX == 27 && charaY == 4) {
+            changeFloor(1);
+            position(27, 5);
+            character.gotoAndPlay("down");
+        };
     } else if (thisfloor == 2) {
     	if (charaX == 18 && charaY == 29) {
     		changeFloor(-1);
@@ -318,7 +366,23 @@ function tick(){
     	    changeFloor(1);
         	position(18, 16);
         	character.gotoAndPlay("up");
-    	};
+    	} else if (charaX == 18 && charaY == 11) {
+            changeFloor(-1);
+            position(18, 16);
+            character.gotoAndPlay("down")
+        } else if (charaX == 21 && charaY == 11) {
+            changeFloor(1);
+            position(22, 9);
+            character.gotoAndPlay("up")
+        } else if (charaX == 27 && charaY == 4) {
+            changeFloor(-1);
+            position(27, 5);
+            character.gotoAndPlay("up");
+        } else if (charaX == 26 && charaY == 4) {
+            changeFloor(1);
+            position(27, 3);
+            character.gotoAndPlay("down");
+        };
     } else if (thisfloor == 3) {
     	if (charaX == 17 && charaY == 17) {
     		changeFloor(-1);
@@ -328,7 +392,23 @@ function tick(){
 	        changeFloor(1);
     	    position(19, 12);
         	character.gotoAndPlay("up");
-    	}
+    	} else if (charaX == 21 && charaY == 14) {
+            changeFloor(1);
+            position(21, 13);
+            character.gotoAndPlay("up")
+        } else if (charaX == 27 && charaY == 2) {
+            changeFloor(-1);
+            position(26, 5);
+            character.gotoAndPlay("down");
+        } else if (charaX == 26 && charaY == 2) {
+            changeFloor(1);
+            position(29, 6);
+            character.gotoAndPlay("down");
+        } else if (charaX == 22 && charaY == 10) {
+            changeFloor(-1);
+            position(21, 10);
+            character.gotoAndPlay("up");
+        };
     } else if (thisfloor == 4) {
     	if (charaX == 25 && charaY == 5) {
     		mapObstacleData = fourthMapObstacleData2;
@@ -346,7 +426,19 @@ function tick(){
 			changeFloor(1);
         	position(23, 7);
         	character.gotoAndPlay("up");	
-		};
+		} else if (charaX == 29 && charaY == 5) {
+            changeFloor(-1);
+            position(26, 3);
+            character.gotoAndPlay("down");
+        } else if (charaX == 28 && charaY == 5) {
+            changeFloor(1);
+            position(29, 13);
+            character.gotoAndPlay("down");
+        } else if (charaX == 21 && charaY == 14) {
+            changeFloor(-1);
+            position(21, 15);
+            character.gotoAndPlay("down");
+        };
     } else if (thisfloor == 5) {
     	if ((charaX == 22 || charaX == 23 || charaX == 24) && (charaY == 3 || charaY == 7)) {
     		mapObstacleData = fifthMapObstacleData2;
@@ -356,7 +448,24 @@ function tick(){
     		changeFloor(-1);
     		position(23, 2);
     		character.gotoAndPlay("down")
-    	}
+    	} else if (charaX == 29 && charaY == 12) {
+            changeFloor(-1);
+            position(28, 6);
+            character.gotoAndPlay("down");
+        } else if (charaX == 28 && charaY == 12) {
+            changeFloor(1);
+            position(29, 6);
+            character.gotoAndPlay("down");
+        };
+    } else if (thisfloor == 6) {
+        if (charaX == 29 && charaY == 5) {
+            changeFloor(-1);
+            position(28, 13);
+            character.gotoAndPlay("down");
+        } else if (charaX == 28 && charaY == 5) {
+            changeFloor(1);
+            position(1, 1);
+        };
     };
 
     stage.update();

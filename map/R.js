@@ -4,12 +4,12 @@ var RMapLowLayerData =
 [0, 0, 0, 0, 0]
 ];
 
-var RObstacleData =
+var RMapObstacleData =
 [[1, 0, 0, 0, 1],
 [0, 0, 0, 0, 0]
 ];
 
 var RMapUpperLayerData =
-[[1, 0, 0, 0, 1],
+[[27, 0, 0, 0, 27],
 [0, 0, 0, 0, 0]
 ];
