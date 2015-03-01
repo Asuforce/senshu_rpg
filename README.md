@@ -1,13 +1,17 @@
 #Senshu RPG
 ##Product by Team X
 
-##開発環境
-Mac OSX Yosemite
+##Attention
+This game has sound.
+We recommend WASD key to control your character.
 
-##動作ブラウザ
+##Compatible browser
 Google Chrome40
 Firefox 35
 Safari 8
 
-##留意点
-操作はWASDを推奨します。
+##Application develop environment
+Mac OSX Yosemite
+
+##Programming language
+HTML, CSS, Javascript(createJS)
