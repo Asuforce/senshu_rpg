@@ -1,11 +1,11 @@
 var stage;
 var message;
-var debugMessage;
 var queue = new createjs.LoadQueue(true);
 var character;
 
 var floor_SpriteSheetField;
 var object_SpriteSheetField;
+var charaSpriteSheet;
 
 var backgroundMap = new createjs.Container();
 var foregroundMap = new createjs.Container();
@@ -13,7 +13,7 @@ var foregroundMap = new createjs.Container();
 var prevDirection = 4;
 var direction = 4; //歩いていく方向 （0～3：下上左右  4:止）
 var keyFlags = [false, false, false, false];
-var charaX = 0; var charaY = 0;
+var charaX = 0, charaY = 0;
 var CHARA_SPEED = 16;
 var i = 0;
 var mapData;
@@ -22,6 +22,8 @@ var mapUpperLayerData;
 var mapObstacleData;
 
 var thisfloor = 1;
+var floorX = 64, floorY;
+var firstload = true;
 
 window.onload = init;
 
@@ -31,7 +33,7 @@ function init() {
     position(10, 10);
     message = new createjs.Text("Now Loading... ", "24px Arial", "#ffffff");
     stage.addChild(message);
-    message.x = 50;   message.y = 100;
+    message.x = 50; message.y = 100;
 
     stage.update();
 
@@ -41,10 +43,9 @@ function init() {
         { src: "./pic/chara.png", type:"image", id: "character" }
     ];
 
-    queue.addEventListener("progress",handleProgress);
-    //queue.addEventListener("fileload",handleFileLoad);  //マニフェストで一括ロード
-    queue.addEventListener("complete",handleComplete); //loadManifestが終わったら実行される
-    queue.loadManifest(manifest); //データを取得するときはquere.getResult()
+    queue.addEventListener("progress", handleProgress);
+    queue.loadManifest(manifest);                              //データを取得するときはquere.getResult()
+    queue.addEventListener("complete", handleComplete);      //loadManifestが終わったら実行される
 }
 
 //画像ファイルロードの進捗をパーセンテージで表わす
@@ -53,9 +54,8 @@ function handleProgress(event){
     stage.update();
 }
 
-function handleFileLoad(event){}
-
 function handleComplete(event){
+    floorY = 44;
 
     mapData = firstMapData;
     mapLowLayerData = firstMapLowLayerData;
@@ -76,54 +76,8 @@ function handleComplete(event){
     });
     object_SpriteSheetField = new createjs.BitmapAnimation(object_SpriteSheet);
 
-
-    //一番下にくる背景マップ作成
-    var x = 0, y = 0;
-    while (y < 44){
-        while (x < 64){
-           if (mapData[y][x] < 5) {
-               var map = floor_SpriteSheetField.clone();
-               map.setTransform(x*32, y*32);
-               map.gotoAndStop(mapData[y][x]);
-               backgroundMap.addChild(map);
-               x += 1;
-           } else if (192 <= mapData[y][x] && mapData[y][x]  < 320) {
-            	//var map = floor_SpriteSheetField.clone();
-       		    //map.setTransform(x*32, y*32);
-            	//map.gotoAndStop(mapData[y][x] - 192);
-            	//backgroundMap.addChild(map);
-            	//x += 1;
-            }
-        }
-        x = 0;
-        y += 1;
-    }
-
-    //背景マップの上にマップチップ配置
-    x = 0; y = 0;
-    while (y < 44){
-        while (x < 64){
-            if (mapLowLayerData[y][x] < 256) {
-            	var map = floor_SpriteSheetField.clone();
-              map.setTransform(x*32, y*32);
-              map.gotoAndStop(mapLowLayerData[y][x]);
-              backgroundMap.addChild(map);
-              x += 1;
-          } else if (256 <= mapLowLayerData[y][x] && mapLowLayerData[y][x]  < 512) {
-            	//var map = object_SpriteSheetField.clone();
-            	//map.setTransform(x*32, y*32);
-            	//map.gotoAndStop(mapLowLayerData[y][x] - 256);
-            	//backgroundMap.addChild(map);
-            	//x += 1;
-            }
-        }
-        x = 0;
-        y += 1;
-    }
-    stage.addChild(backgroundMap);
-
     //操作キャラアニメーション用のスプライトシートを作成
-    var charaSpriteSheet = new createjs.SpriteSheet({
+    charaSpriteSheet = new createjs.SpriteSheet({
         images: [queue.getResult("character")],
         frames: { width:32, height:32 },
         animations: {
@@ -134,36 +88,10 @@ function handleComplete(event){
         }
     });
     character = new createjs.BitmapAnimation(charaSpriteSheet);
-    stage.addChild(character);
-    character.gotoAndPlay("down");
 
     //アニメーションさせるキャラの最初の座標を設定
     character.x = 224;
     character.y = 224;
-
-    //一番上にくる前景マップ作成
-    //バックグラウンドマップとキャラクターの上に前景マップ作成
-    x = 0, y = 0;
-    while (y < 44){
-        while (x < 64){
-           if (mapUpperLayerData[y][x] < 256) {
-               var map = object_SpriteSheetField.clone();
-               map.setTransform(x*32, y*32);
-               map.gotoAndStop(mapUpperLayerData[y][x]);
-            	//foregroundMap.addChild(map);
-            	x += 1;
-            } else if (256 <= mapUpperLayerData[y][x] && mapUpperLayerData[y][x]  < 512) {
-            	//var map = tileCSpriteSheetField.clone();
-            	//map.setTransform(x*32, y*32);
-            	//map.gotoAndStop(mapUpperLayerData[y][x] - 256);
-            	//foregroundMap.addChild(map);
-            	//x += 1;
-            }
-        }
-        x = 0;
-        y += 1;
-    }
-    stage.addChild(foregroundMap);
 
     //30FPSでスタート
     createjs.Ticker.setFPS(30);
@@ -175,11 +103,65 @@ function handleComplete(event){
     document.addEventListener('keyup', handleKeyUp, false);
 
     stage.removeChild(message);
+
+    //一番下にくる背景マップ作成
+    var x = 0, y = 0;
+    while (y < floorY){
+        while (x < floorX){
+           if (mapData[y][x] < 5) {
+               var map = floor_SpriteSheetField.clone();
+               map.setTransform(x*32, y*32);
+               map.gotoAndStop(mapData[y][x]);
+               backgroundMap.addChild(map);
+               x += 1;
+           }
+        }
+        x = 0;
+        y += 1;
+    }
+
+    //背景マップの上にマップチップ配置
+    x = 0; y = 0;
+    while (y < floorY){
+        while (x < floorX){
+            if (mapLowLayerData[y][x] < 256) {
+                var map = floor_SpriteSheetField.clone();
+                map.setTransform(x*32, y*32);
+                map.gotoAndStop(mapLowLayerData[y][x]);
+                backgroundMap.addChild(map);
+                x += 1;
+            }
+        }
+        x = 0;
+        y += 1;
+    }
+    stage.addChild(backgroundMap);
+
+    //一番上にくる前景マップ作成
+    //バックグラウンドマップとキャラクターの上に前景マップ作成
+    x = 0; y = 0;
+    while (y < floorY){
+        while (x < floorX){
+           if (mapUpperLayerData[y][x] < 256) {
+               var map = object_SpriteSheetField.clone();
+               map.setTransform(x*32, y*32);
+               map.gotoAndStop(mapUpperLayerData[y][x]);
+               //foregroundMap.addChild(map);
+               x += 1;
+            }
+        }
+        x = 0;
+        y += 1;
+    }
+    stage.addChild(foregroundMap);
+
+    stage.addChild(character);
+    character.gotoAndPlay("down");
 }
 
 function position(posX, posY) {
-	posX *= 32; posY *= 32;
-	charaX = 224+posX;
+    posX *= 32; posY *= 32;
+    charaX = 224+posX;
     charaY = 224+posY;
     backgroundMap.x = -posX;
     backgroundMap.y = -posY;
@@ -214,7 +196,6 @@ function handleKeyUp(event) {
 }
 
 function tick(){
-
     if (charaX % 32 === 0 && ((charaY) % 32) === 0) { //+16は操作キャラの32ドット超の部分
         direction = 4; //止まる
 
@@ -250,17 +231,17 @@ function tick(){
             direction = 2;
         }
         } else if (keyFlags[3]) { //→ d ボタン
-           if (prevDirection != 3) {
-            character.gotoAndPlay("right");
-            prevDirection = 3;
-        }
-        if (charaX <= 2048-32 && mapObstacleData[y][x+1] === 0) { //32はキャラクタ幅
-            //↑横34マス×32ドットの1088から移動スピード8を差し引いた1080
-            //そこからさらにキャラクタの幅の32を差し引いた　1080-32
-            direction = 3;
+            if (prevDirection != 3) {
+                character.gotoAndPlay("right");
+                prevDirection = 3;
+            }
+            if (charaX <= 2048-32 && mapObstacleData[y][x+1] === 0) { //32はキャラクタ幅
+                //↑横34マス×32ドットの1088から移動スピード8を差し引いた1080
+                //そこからさらにキャラクタの幅の32を差し引いた　1080-32
+                direction = 3;
+            }
         }
     }
-}
 
     //次のマスまで操作キャラを自動的に歩かせる(と仮定して座標計算)
     if(direction === 0) {
@@ -274,12 +255,13 @@ function tick(){
     }
     if (direction < 4) moveMap(); //マップをスクロール
 
+    // 階数条件分岐
     if (charaX == 480 && charaY == 736 && thisfloor == 1) {
-    	to2F();
-    	position(10, 4);
+        changeFloor(1);
+        position(10, 4);
     } else if (charaX == 480 && charaY == 736 && thisfloor == 2) {
-    	to3F();
-    	position(10, 4);
+        changeFloor(1);
+        position(10, 4);
     }
 
     stage.update();
@@ -287,7 +269,6 @@ function tick(){
 
 //マップをスクロール
 function moveMap() {
-
     backgroundMap.x = (480-32)/2-charaX;
     backgroundMap.y = (480-32)/2-charaY;
     foregroundMap.x = (480-32)/2-charaX;
