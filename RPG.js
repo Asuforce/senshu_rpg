@@ -21,7 +21,7 @@ var mapUpperLayerData;
 var mapObstacleData;
 
 var thisfloor = 1;
-var floorX = 64, floorY;
+var floorX, floorY;
 var firstload = true;
 var dot = 32;
 
@@ -55,12 +55,13 @@ function progressLoad(event){
 
 function mapLoad(event){
     if (firstload) {
-        floorY = 44;
-
         mapData = firstMapData;
         mapLowLayerData = firstMapLowLayerData;
         mapUpperLayerData = firstMapUpperLayerData;
         mapObstacleData = firstMapObstacleData;
+
+        floorX = mapData[0].length;
+        floorY = mapData.length;
 
         //一番下にくるマップ用スプライトシート作成
         var floor_SpriteSheet = new createjs.SpriteSheet({
@@ -150,7 +151,7 @@ function mapLoad(event){
                var map = object_SpriteSheetField.clone();
                map.setTransform(x*dot, y*dot);
                map.gotoAndStop(mapUpperLayerData[y][x]);
-               //foregroundMap.addChild(map);
+               foregroundMap.addChild(map);
                x += 1;
             }
         }
@@ -169,62 +170,57 @@ function changeFloor(cnt) {
     thisfloor += cnt;
 
     switch(thisfloor) {
-      case 1:
-        floorY = 44;
+      case 1: //64*44
         mapData = firstMapData;
         mapLowLayerData = firstMapLowLayerData;
         mapUpperLayerData = firstMapUpperLayerData;
         mapObstacleData = firstMapObstacleData;
         break;
 
-      case 2:
-        floorY = 38;
+      case 2: //64*38
         mapData = secondMapData;
         mapLowLayerData = secondMapLowLayerData;
         mapUpperLayerData = secondMapUpperLayerData;
         mapObstacleData = secondMapObstacleData;
         break;
 
-      case 3:
-        floorY = 22;
+      case 3: //64*22
         mapData = thirdMapData;
         mapLowLayerData = thirdMapLowLayerData;
         mapUpperLayerData = thirdMapUpperLayerData;
         mapObstacleData = thirdMapObstacleData;
         break;
 
-      case 4:
-        floorY = 21;
+      case 4: //64*21
         mapData = fourthMapData;
         mapLowLayerData = fourthMapLowLayerData;
         mapUpperLayerData = fourthMapUpperLayerData;
         mapObstacleData = fourthMapObstacleData;
         break;
 
-      case 5:
-        floorY = 20;
+      case 5: //64*20
         mapData = fifthMapData;
         mapLowLayerData = fifthMapLowLayerData;
         mapUpperLayerData = fifthMapUpperLayerData;
         mapObstacleData = fifthMapObstacleData;
         break;
 
-      case 6:
-        floorY = 13;
+      case 6: //64*13
         mapData = sixthMapData;
         mapLowLayerData = sixthMapLowLayerData;
         mapUpperLayerData = sixthMapUpperLayerData;
         mapObstacleData = sixthMapObstacleData;
         break;
 
-      case 7:
-        floorY = 2;
+      case 7: //5*2
         mapData = RMapData;
         mapLowLayerData = RMapLowLayerData;
         mapUpperLayerData = RMapUpperLayerData;
         mapObstacleData = RMapObstacleData;
         break;
     }
+    floorX = mapData[0].length;
+    floorY = mapData.length;
     mapLoad();
 }
 
@@ -287,7 +283,7 @@ function tick(){
                 character.gotoAndPlay("down");
                 prevDirection = 0;
             }
-            if (charaY < (1408-dot) && mapObstacleData[y+1][x] === 0){
+            if (charaY < floorY-1 && mapObstacleData[y+1][x] === 0){
                 direction = 0;
             }
         } else if (keyFlags[1]) { //↑ w ボタン
@@ -311,9 +307,7 @@ function tick(){
                 character.gotoAndPlay("right");
                 prevDirection = 3;
             }
-            if (charaX <= 2048-dot && mapObstacleData[y][x+1] === 0) { //dotはキャラクタ幅
-                //↑横34マス×32ドットの1088から移動スピード8を差し引いた1080
-                //そこからさらにキャラクタの幅の32を差し引いた　1080-32
+            if (charaX < floorX-1 && mapObstacleData[y][x+1] === 0) {
                 direction = 3;
             }
         }
@@ -340,7 +334,27 @@ function tick(){
         changeFloor(-1);
         position(18, 37);
         character.gotoAndPlay("down");
-    }
+    } else if (charaX == 19 && charaY == 24 && thisfloor == 2) {
+        changeFloor(1);
+        position(18, 16);
+        character.gotoAndPlay("up");
+    } else if (charaX == 17 && charaY == 17 && thisfloor == 3) {
+        changeFloor(-1);
+        position(18, 25);
+        character.gotoAndPlay("down");
+    } else if (charaX == 18 && charaY == 14 && thisfloor == 3) {
+        changeFloor(1);
+        position(19, 12);
+        character.gotoAndPlay("up");
+    } else if (charaX == 18 && charaY == 13 && thisfloor == 4) {
+        changeFloor(-1);
+        position(17, 15);
+        character.gotoAndPlay("down");
+    } else if (charaX == 18 && charaY == 5 && thisfloor == 4) {
+        changeFloor(1);
+        position(19, 5);
+        character.gotoAndPlay("up");
+    } //５階破綻してる。一度言ったら戻れない
 
     stage.update();
 }
