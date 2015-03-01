@@ -31,7 +31,7 @@ function init() {
     stage = new createjs.Stage(myCanvas);
     message = new createjs.Text("Now Loading... ", "24px Arial", "#ffffff");
     stage.addChild(message);
-    message.x = 50; message.y = 100;
+    message.x = myCanvas.width/2; message.y = myCanvas.height/2;
 
     stage.update();
 
@@ -90,8 +90,8 @@ function mapLoad(event){
         character.gotoAndPlay("up");
 
         //アニメーションさせるキャラの最初の座標を設定
-        character.x = 224;
-        character.y = 224;
+        character.x = myCanvas.width/2;
+        character.y = myCanvas.height/2;
 
         //30FPSでスタート
         createjs.Ticker.setFPS(30);
@@ -111,7 +111,7 @@ function mapLoad(event){
     var x = 0, y = 0;
     while (y < floorY){
         while (x < floorX){
-           if (mapLowLayerData[y][x] < 5) {
+           if (mapLowLayerData[y][x] < 13) {
                var map = floor_SpriteSheetField.clone();
                map.setTransform(x*dot, y*dot);
                map.gotoAndStop(mapLowLayerData[y][x]);
@@ -123,14 +123,12 @@ function mapLoad(event){
         y += 1;
     }
 
-    stage.addChild(backgroundMap);
-
     //一番上にくる前景マップ作成
     //バックグラウンドマップとキャラクターの上に前景マップ作成
     x = 0; y = 0;
     while (y < floorY){
         while (x < floorX){
-           if (mapUpperLayerData[y][x] < 256) {
+           if (mapUpperLayerData[y][x] < 30) {
                var map = object_SpriteSheetField.clone();
                map.setTransform(x*dot, y*dot);
                map.gotoAndStop(mapUpperLayerData[y][x]);
@@ -140,9 +138,9 @@ function mapLoad(event){
         }
         x = 0;
         y += 1;
-    }
+    }       
+    stage.addChild(backgroundMap);
     stage.addChild(foregroundMap);
-
     stage.addChild(character);
 }
 
@@ -180,7 +178,7 @@ function changeFloor(cnt) {
       case 5: //64*20
         mapLowLayerData = fifthMapLowLayerData;
         mapUpperLayerData = fifthMapUpperLayerData;
-        mapObstacleData = fifthMapObstacleData1;
+        mapObstacleData = fifthMapObstacleData;
         break;
 
       case 6: //64*13
@@ -246,7 +244,10 @@ function handleKeyUp(event) {
 }
 
 function tick(){
-    if (charaX % 1 === 0 && ((charaY) % 1) === 0) { //+16は操作キャラの32ドット超の部分
+	var myPlayer = document.getElementById('musicplayer');
+	myPlayer.play()
+	//console.log(myPlayer.currentTime);
+    if (charaX % 1 === 0 && ( charaY % 1) === 0) { //+16は操作キャラの32ドット超の部分
         direction = 4; //止まる
 
         //とりあえずこの方法で勇者座標から配列インデックスを設定
@@ -283,7 +284,7 @@ function tick(){
                 character.gotoAndPlay("right");
                 prevDirection = 3;
             }
-            if (charaX < floorX-1 && mapObstacleData[y][x+1] === 0) {
+            if (charaX < floorX-1 && mapObstacleData[y][x+1] === 0) { 
                 direction = 3;
             }
         }
@@ -307,17 +308,17 @@ function tick(){
     		changeFloor(1);
 	        position(19, 28);
     	    character.gotoAndPlay("up");
-    	}
+    	};
     } else if (thisfloor == 2) {
     	if (charaX == 18 && charaY == 29) {
     		changeFloor(-1);
 	        position(18, 37);
     	    character.gotoAndPlay("down");
-    	} else if (charaX == 19 && charaY == 24) {
+    	} else if (charaX == 19 && charaY == 25) {
     	    changeFloor(1);
         	position(18, 16);
         	character.gotoAndPlay("up");
-    	}
+    	};
     } else if (thisfloor == 3) {
     	if (charaX == 17 && charaY == 17) {
     		changeFloor(-1);
@@ -329,22 +330,34 @@ function tick(){
         	character.gotoAndPlay("up");
     	}
     } else if (thisfloor == 4) {
-    	if (charaX == 18 && charaY == 13) {
+    	if (charaX == 25 && charaY == 5) {
+    		mapObstacleData = fourthMapObstacleData2;
+    	} else if (charaX == 25 && charaY == 6 || charaX == 24 && charaY == 5) {
+    		mapObstacleData = fourthMapObstacleData;
+    	} else if (charaX == 18 && charaY == 13) {
     		changeFloor(-1);
 	        position(17, 15);
     	    character.gotoAndPlay("down");
-    	} else if (charaX == 18 && charaY == 5) {
+    	} else if (charaX == 19 && charaY == 5) {
        		changeFloor(1);
-        	position(17, 15);
+        	position(19, 5);
         	character.gotoAndPlay("up");
-		}
+		} else if ((charaX == 22 || charaX == 23 || charaX == 24) && charaY == 1) {
+			changeFloor(1);
+        	position(23, 7);
+        	character.gotoAndPlay("up");	
+		};
     } else if (thisfloor == 5) {
-    	if ((charaX == 22 || charaX == 23 || charaX == 24) && charaY == 3) {
+    	if ((charaX == 22 || charaX == 23 || charaX == 24) && (charaY == 3 || charaY == 7)) {
     		mapObstacleData = fifthMapObstacleData2;
     	} else if ((charaX == 19 || charaX == 20 || charaX == 21) && charaY == 3) {
-    		mapObstacleData = fifthMapObstacleData1;
+    		mapObstacleData = fifthMapObstacleData;
+    	} else if ((charaX == 22 || charaX == 23 || charaX == 24) && charaY == 8) {
+    		changeFloor(-1);
+    		position(23, 2);
+    		character.gotoAndPlay("down")
     	}
-    }
+    };
 
     stage.update();
 }

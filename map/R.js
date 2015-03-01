@@ -9,7 +9,7 @@ var RObstacleData =
 [0, 0, 0, 0, 0]
 ];
 
-var RMapData =
+var RMapUpperLayerData =
 [[1, 0, 0, 0, 1],
 [0, 0, 0, 0, 0]
 ];
