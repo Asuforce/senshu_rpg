@@ -1,5 +1,5 @@
 #Senshu RPG
-##Product by Team X
+**Product by Team X**
 
 ##Attention
 This game has sound.
