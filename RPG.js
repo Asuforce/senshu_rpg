@@ -1,7 +1,7 @@
 var stage;
 var message;
 var debugMessage;
-var queue;
+var queue = new createjs.LoadQueue(true);
 var character;
 
 var floor_SpriteSheetField;
@@ -13,25 +13,25 @@ var foregroundMap = new createjs.Container();
 var prevDirection = 4;
 var direction = 4; //歩いていく方向 （0～3：下上左右  4:止）
 var keyFlags = [false, false, false, false];
-var charaX = 0, charaY = 0;
+var charaX = 0; var charaY = 0;
 var CHARA_SPEED = 16;
 var i = 0;
 var mapData;
 var mapLowLayerData;
 var mapUpperLayerData;
+var mapObstacleData;
+
+var thisfloor = 1;
 
 window.onload = init;
 
 function init() {
     var myCanvas = document.getElementById('myCanvas');
     stage = new createjs.Stage(myCanvas);
-
     position(10, 10);
-
     message = new createjs.Text("Now Loading... ", "24px Arial", "#ffffff");
     stage.addChild(message);
-    message.x = 50;
-    message.y = 100;
+    message.x = 50;   message.y = 100;
 
     stage.update();
 
@@ -41,11 +41,10 @@ function init() {
         { src: "./pic/chara.png", type:"image", id: "character" }
     ];
 
-    queue = new createjs.LoadQueue(true);
     queue.addEventListener("progress",handleProgress);
-    queue.addEventListener("fileload",handleFileLoad);
-    queue.addEventListener("complete",handleComplete);
-    queue.loadManifest(manifest);
+    //queue.addEventListener("fileload",handleFileLoad);  //マニフェストで一括ロード
+    queue.addEventListener("complete",handleComplete); //loadManifestが終わったら実行される
+    queue.loadManifest(manifest); //データを取得するときはquere.getResult()
 }
 
 //画像ファイルロードの進捗をパーセンテージで表わす
@@ -57,9 +56,11 @@ function handleProgress(event){
 function handleFileLoad(event){}
 
 function handleComplete(event){
+
     mapData = firstMapData;
     mapLowLayerData = firstMapLowLayerData;
     mapUpperLayerData = firstMapUpperLayerData;
+    mapObstacleData = firstMapObstacleData;
 
     //一番下にくるマップ用スプライトシート作成
     var floor_SpriteSheet = new createjs.SpriteSheet({
@@ -75,38 +76,45 @@ function handleComplete(event){
     });
     object_SpriteSheetField = new createjs.BitmapAnimation(object_SpriteSheet);
 
+
     //一番下にくる背景マップ作成
     var x = 0, y = 0;
     while (y < 44){
         while (x < 64){
-            if (mapData[y][x] < 11) {
-                var map = floor_SpriteSheetField.clone();
-                map.setTransform(x*32, y*32);
-                map.gotoAndStop(mapData[y][x]);
-                backgroundMap.addChild(map);
-                x += 1;
-            } /*else if (192 <= mapData[y][x] && mapData[y][x]  < 320) {
-                var map = floor_SpriteSheetField.clone();
-                map.setTransform(x*32, y*32);
-                map.gotoAndStop(mapData[y][x] - 192);
-                backgroundMap.addChild(map);
-                x += 1;
-            }*/
+           if (mapData[y][x] < 5) {
+               var map = floor_SpriteSheetField.clone();
+               map.setTransform(x*32, y*32);
+               map.gotoAndStop(mapData[y][x]);
+               backgroundMap.addChild(map);
+               x += 1;
+           } else if (192 <= mapData[y][x] && mapData[y][x]  < 320) {
+            	//var map = floor_SpriteSheetField.clone();
+       		    //map.setTransform(x*32, y*32);
+            	//map.gotoAndStop(mapData[y][x] - 192);
+            	//backgroundMap.addChild(map);
+            	//x += 1;
+            }
         }
         x = 0;
         y += 1;
     }
 
     //背景マップの上にマップチップ配置
-    x = 0, y = 0;
+    x = 0; y = 0;
     while (y < 44){
         while (x < 64){
-            if (mapLowLayerData[y][x] < 11) {
-                var map = floor_SpriteSheetField.clone();
-                map.setTransform(x*32, y*32);
-                map.gotoAndStop(mapLowLayerData[y][x]);
-                backgroundMap.addChild(map);
-                x += 1;
+            if (mapLowLayerData[y][x] < 256) {
+            	var map = floor_SpriteSheetField.clone();
+              map.setTransform(x*32, y*32);
+              map.gotoAndStop(mapLowLayerData[y][x]);
+              backgroundMap.addChild(map);
+              x += 1;
+          } else if (256 <= mapLowLayerData[y][x] && mapLowLayerData[y][x]  < 512) {
+            	//var map = object_SpriteSheetField.clone();
+            	//map.setTransform(x*32, y*32);
+            	//map.gotoAndStop(mapLowLayerData[y][x] - 256);
+            	//backgroundMap.addChild(map);
+            	//x += 1;
             }
         }
         x = 0;
@@ -138,13 +146,19 @@ function handleComplete(event){
     x = 0, y = 0;
     while (y < 44){
         while (x < 64){
-         if (mapUpperLayerData[y][x] < 11) {
-             var map = object_SpriteSheetField.clone();
-             map.setTransform(x*32, y*32);
-             map.gotoAndStop(mapUpperLayerData[y][x]);
-             //foregroundMap.addChild(map);
-             x += 1;
-           }
+           if (mapUpperLayerData[y][x] < 256) {
+               var map = object_SpriteSheetField.clone();
+               map.setTransform(x*32, y*32);
+               map.gotoAndStop(mapUpperLayerData[y][x]);
+            	//foregroundMap.addChild(map);
+            	x += 1;
+            } else if (256 <= mapUpperLayerData[y][x] && mapUpperLayerData[y][x]  < 512) {
+            	//var map = tileCSpriteSheetField.clone();
+            	//map.setTransform(x*32, y*32);
+            	//map.gotoAndStop(mapUpperLayerData[y][x] - 256);
+            	//foregroundMap.addChild(map);
+            	//x += 1;
+            }
         }
         x = 0;
         y += 1;
@@ -164,8 +178,8 @@ function handleComplete(event){
 }
 
 function position(posX, posY) {
-    posX *= 32; posY *= 32;
-    charaX = 224+posX;
+	posX *= 32; posY *= 32;
+	charaX = 224+posX;
     charaY = 224+posY;
     backgroundMap.x = -posX;
     backgroundMap.y = -posY;
@@ -200,6 +214,7 @@ function handleKeyUp(event) {
 }
 
 function tick(){
+
     if (charaX % 32 === 0 && ((charaY) % 32) === 0) { //+16は操作キャラの32ドット超の部分
         direction = 4; //止まる
 
@@ -213,39 +228,39 @@ function tick(){
                 character.gotoAndPlay("down");
                 prevDirection = 0;
             }
-            if (charaY < (1408-32) && firstMapObstacleData[y+1][x] === 0){
+            if (charaY < (1408-32) && mapObstacleData[y+1][x] === 0){
                 //↑縦35マス×32ドットの1120から移動スピード8を差し引いた1112
                 //そこからさらにキャラクタの高さ分の48を差し引いた　1112-48
                 direction = 0;
             }
         } else if (keyFlags[1]) { //↑ w ボタン
-         if (prevDirection != 1) {
+           if (prevDirection != 1) {
             character.gotoAndPlay("up");
             prevDirection = 1;
         }
-        if (charaY > 0 && firstMapObstacleData[y-1][x] === 0) {
+        if (charaY > 0 && mapObstacleData[y-1][x] === 0) {
             direction = 1;
         }
         } else if (keyFlags[2]) { //← a ボタン
-         if (prevDirection != 2) {
+           if (prevDirection != 2) {
             character.gotoAndPlay("left");
             prevDirection = 2;
         }
-        if (charaX >= 4 && firstMapObstacleData[y][x-1] === 0) {
+        if (charaX >= 4 && mapObstacleData[y][x-1] === 0) {
             direction = 2;
         }
         } else if (keyFlags[3]) { //→ d ボタン
-         if (prevDirection != 3) {
+           if (prevDirection != 3) {
             character.gotoAndPlay("right");
             prevDirection = 3;
-        } if (charaX <= 2048-32 && firstMapObstacleData[y][x+1] === 0) { //32はキャラクタ幅
-                //↑横34マス×32ドットの1088から移動スピード8を差し引いた1080
-                //そこからさらにキャラクタの幅の32を差し引いた　1080-32
-                direction = 3;
-            }
         }
-
+        if (charaX <= 2048-32 && mapObstacleData[y][x+1] === 0) { //32はキャラクタ幅
+            //↑横34マス×32ドットの1088から移動スピード8を差し引いた1080
+            //そこからさらにキャラクタの幅の32を差し引いた　1080-32
+            direction = 3;
+        }
     }
+}
 
     //次のマスまで操作キャラを自動的に歩かせる(と仮定して座標計算)
     if(direction === 0) {
@@ -259,12 +274,12 @@ function tick(){
     }
     if (direction < 4) moveMap(); //マップをスクロール
 
-    if (charaX == 480 && charaY == 720) {
-        charaX+=320;
-        backgroundMap.x = (480-32)/2-charaX;
-        backgroundMap.y = (480-32)/2-charaY;
-        foregroundMap.x = (480-32)/2-charaX;
-        foregroundMap.y = (480-32)/2-charaY;
+    if (charaX == 480 && charaY == 736 && thisfloor == 1) {
+    	to2F();
+    	position(10, 4);
+    } else if (charaX == 480 && charaY == 736 && thisfloor == 2) {
+    	to3F();
+    	position(10, 4);
     }
 
     stage.update();
@@ -272,17 +287,19 @@ function tick(){
 
 //マップをスクロール
 function moveMap() {
+
     backgroundMap.x = (480-32)/2-charaX;
     backgroundMap.y = (480-32)/2-charaY;
     foregroundMap.x = (480-32)/2-charaX;
     foregroundMap.y = (480-32)/2-charaY;
-
-
+    /*
     i++;
     if (i == 2) {
-       console.log("backgroundMap x:",backgroundMap.x,"backgroundMap y:", backgroundMap.y);
-       console.log("foregroundMap x:",foregroundMap.x,"foregroundMap.y:",foregroundMap.y);
-       console.log("character x:", charaX, "character y:", charaY);
-       i = 0;
-   }
+   	//console.log("backgroundMap x:",backgroundMap.x,"backgroundMap y:", backgroundMap.y);
+	//console.log("foregroundMap x:",foregroundMap.x,"foregroundMap.y:",foregroundMap.y);
+	//console.log("character x:", charaX, "character y:", charaY);
+	//console.log(queue);
+	i = 0;
+    }
+    */
 }
