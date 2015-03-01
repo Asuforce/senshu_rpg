@@ -3,13 +3,12 @@ var message;
 var message_f;
 var message_audio;
 var graphics;
+var button;
 var triangle1; var triangle2;
 var queue = new createjs.LoadQueue(true);
 var character;
 var audio;
-var flg = 'On';
-var timeout_id = null;
-
+var flg = 'on';
 
 var floor_SpriteSheetField;
 var object_SpriteSheetField;
@@ -31,88 +30,6 @@ var thisfloor = 1;
 var floorX, floorY;
 var firstload = true;
 var dot = 32;
-
-window.requestAnimationFrame = (function() {
-  return window.requestAnimationFrame ||
-  window.webkitRequestAnimationFrame ||
-  window.mozRequestAnimationFrame ||
-  window.msRequestAnimationFrame ||
-  window.oRequestAnimationFrame ||
-  function(f) { return window.setTimeout(f, 1000 / 60); };
-}());
-
-window.cancelAnimationFrame = (function() {
-  return window.cancelAnimationFrame ||
-  window.cancelRequestAnimationFrame ||
-  window.webkitCancelAnimationFrame ||
-  window.webkitCancelRequestAnimationFrame ||
-  window.mozCancelAnimationFrame ||
-  window.mozCancelRequestAnimationFrame ||
-  window.msCancelAnimationFrame ||
-  window.msCancelRequestAnimationFrame ||
-  window.oCancelAnimationFrame ||
-  window.oCancelRequestAnimationFrame ||
-  function(id) { window.clearTimeout(id); };
-}());
-
-var now = window.performance && (
-  performance.now || performance.mozNow || performance.msNow ||
-  performance.oNow || performance.webkitNow
-  );
-
-window.getTime = function() {
-  return (now && now.call(performance)) ||
-  (new Date().getTime());
-};
-
-var timeMax = 5000; // 15秒
-var percent = 0;
-var aTimer = null;
-var aTimeSum = 0;
-var aTimeOld = 0;
-
-// タイマーを進行させる
-var timerUpdate = function() {
-  percent = Math.floor((aTimeSum / timeMax) * 100);
-  if (percent == 100) {
-    seven_warp();
-    timerReset();
-  }
-};
-
-// タイマーをループさせる
-var timerLoop = function() {
-  var now = getTime();
-  aTimeSum += (now - aTimeOld);
-  aTimeOld = now;
-
-  timerUpdate();
-  if (aTimer) {
-    aTimer = requestAnimationFrame(timerLoop);
-  }
-};
-
-// タイマー開始
-var timerStart = function() {
-    console.log('start');
-  aTimeOld = getTime();
-  timerLoop();
-};
-
-var timerStop = function() {
-  if (aTimer) {
-    cancelAnimationFrame(aTimer);
-    aTimer = null;
-  }
-};
-
-
-// タイマーリセット
-var timerReset = function() {
-  timerStop();
-  aTimeSum = 0;
-  percent = 0;
-};
 
 window.onload = init;
 
@@ -146,7 +63,6 @@ function init() {
         .closePath();
 
     triangle1 = new createjs.Shape(graphics);
-    button1  = new createjs.Shape(graphics);
 
     graphics = new createjs.Graphics();
     graphics.beginStroke("#aaaaaa"); // 色の指定（線と塗りつぶしとそれぞれ色を指定する）
@@ -158,7 +74,16 @@ function init() {
         .closePath();
 
     triangle2 = new createjs.Shape(graphics);
-    button2  = new createjs.Shape(graphics);
+
+    graphics = new createjs.Graphics();
+    graphics.beginStroke("#aaaaaa");
+    graphics.beginFill("#ca7a98");
+    graphics
+        .beginStroke("#cccccc")
+        .beginFill("#897DA0")
+        .drawRoundRect(0, 0, 100, 40, 20);
+
+    button = new createjs.Shape(graphics);
 
     audio = new Audio();
     audio.src = 'music.mp3';
@@ -227,25 +152,52 @@ function mapLoad(event){
         position(9, 43);
         firstload = false;
     }
-
-    //一番下にくる背景マップ作成
+    //background
     var x = 0, y = 0;
     while (y < floorY){
         while (x < floorX){
-           if (mapLowLayerData[y][x] < 13) {
-               var map = floor_SpriteSheetField.clone();
-               map.setTransform(x*dot, y*dot);
-               map.gotoAndStop(mapLowLayerData[y][x]);
-               backgroundMap.addChild(map);
-               x += 1;
-           }
+            if (mapLowLayerData[y][x] < 20) {
+                var map = floor_SpriteSheetField.clone();
+                map.setTransform(x*dot, y*dot);
+                map.gotoAndStop(mapLowLayerData[y][x]);
+                backgroundMap.addChild(map);
+                x += 1;
+            } else if (90 <= mapLowLayerData[y][x] && mapLowLayerData[y][x] < 100) {
+                if (mapLowLayerData[y][x] == 97) {
+                    var map = floor_SpriteSheetField.clone();
+                    map.setTransform(x*dot, y*dot);
+                    map.gotoAndStop(0);
+                    backgroundMap.addChild(map);
+                    var map = floor_SpriteSheetField.clone();
+                    map.setTransform(x*dot, y*dot);
+                    map.gotoAndStop(18);
+                    foregroundMap.addChild(map);
+                } else if (mapLowLayerData[y][x] == 98) {
+                    var map = floor_SpriteSheetField.clone();
+                    map.setTransform(x*dot, y*dot);
+                    map.gotoAndStop(0);
+                    backgroundMap.addChild(map);
+                    var map = floor_SpriteSheetField.clone();
+                    map.setTransform(x*dot, y*dot);
+                    map.gotoAndStop(8);
+                    foregroundMap.addChild(map);
+                } else if (mapLowLayerData[y][x] == 99) {
+                    var map = floor_SpriteSheetField.clone();
+                    map.setTransform(x*dot, y*dot);
+                    map.gotoAndStop(14);
+                    backgroundMap.addChild(map);
+                    var map = floor_SpriteSheetField.clone();
+                    map.setTransform(x*dot, y*dot);
+                    map.gotoAndStop(8);
+                    foregroundMap.addChild(map);
+                }
+                x += 1;
+            }
         }
         x = 0;
         y += 1;
     }
-
-    //一番上にくる前景マップ作成
-    //バックグラウンドマップとキャラクターの上に前景マップ作成
+    //object
     x = 0; y = 0;
     while (y < floorY){
         while (x < floorX){
@@ -253,16 +205,17 @@ function mapLoad(event){
                var map = object_SpriteSheetField.clone();
                map.setTransform(x*dot, y*dot);
                map.gotoAndStop(mapUpperLayerData[y][x]);
-               foregroundMap.addChild(map);
+               backgroundMap.addChild(map);
                x += 1;
             }
         }
         x = 0;
         y += 1;
     }
+
     stage.addChild(backgroundMap);
-    stage.addChild(foregroundMap);
     stage.addChild(character);
+    stage.addChild(foregroundMap);
 
     triangle1.x = myCanvas.width-100; triangle1.y = myCanvas.height-40;
     triangle2.x = myCanvas.width-110; triangle2.y = myCanvas.height-40;
@@ -274,35 +227,31 @@ function mapLoad(event){
     stage.addChild(triangle2);
     stage.addChild(message_f);
 
-    button1.x = myCanvas.width-220; button1.y = myCanvas.height-40;
-    button2.x = myCanvas.width-230; button2.y = myCanvas.height-40;
+    button.x = myCanvas.width-240; button.y = myCanvas.height-55;
 
     message_audio = new createjs.Text("BGM:"+flg, "20px serif", "#ffffff");
     message_audio.x = myCanvas.width-230; message_audio.y = myCanvas.height-45;
 
-    stage.addChild(button1);
-    stage.addChild(button2);
+    stage.addChild(button);
     stage.addChild(message_audio);
 
-    button1.addEventListener('click', handleEvent);
-    button2.addEventListener('click', handleEvent);
+    button.addEventListener('click', handleEvent);
     message_audio.addEventListener('click', handleEvent);
-    flg = 'Off';
 }
 
 function handleEvent(e) {
     stage.removeChild(message_audio);
-    if(flg == 'On') {
+    if(flg == 'off') {
+        flg = 'on';
         audio.loop = true;
         audio.play();
         message_audio = new createjs.Text("BGM:"+flg, "20px serif", "#ffffff");
         message_audio.x = myCanvas.width-230; message_audio.y = myCanvas.height-45;
-        flg = 'Off';
     } else {
+        flg = 'off';
         audio.pause();
         message_audio = new createjs.Text("BGM:"+flg, "20px serif", "#ffffff");
         message_audio.x = myCanvas.width-230; message_audio.y = myCanvas.height-45;
-        flg = 'On';
     }
     stage.addChild(message_audio);
 }
@@ -363,6 +312,7 @@ function changeFloor(cnt) {
 }
 
 function position(posX, posY) {
+    console.log("thisfloor is " + thisfloor);
     charaX = posX;
     charaY = posY;
     prevDirection = 4; //エリア移動した直後の向き矯正
@@ -471,7 +421,7 @@ function tick(){
             character.gotoAndPlay("up");
         } else if (charaX == 18 && charaY == 15) {
             changeFloor(1);
-            position(18, 10);
+            position(18, 11);
             character.gotoAndPlay("up");
         } else if (charaX == 27 && charaY == 4) {
             changeFloor(1);
@@ -484,7 +434,15 @@ function tick(){
         } else if (charaX === 0 && charaY == 6) {
             changeFloor(1);
             position(1, 6);
+            character.gotoAndPlay("right");
+        } else if (charaX === 62 && charaY == 8) {
+            changeFloor(1);
+            position(61, 7);
             character.gotoAndPlay("left");
+        } else if (charaX === 40 && charaY == 11) {
+            changeFloor(1);
+            position(41, 11);
+            character.gotoAndPlay("up");
         }
     } else if (thisfloor == 2) {
         if (charaX == 18 && charaY == 29) {
@@ -495,30 +453,46 @@ function tick(){
             changeFloor(1);
             position(18, 16);
             character.gotoAndPlay("up");
-        } else if (charaX == 18 && charaY == 11) {
+        } else if (charaX == 18 && charaY == 12) {
             changeFloor(-1);
             position(18, 16);
             character.gotoAndPlay("down");
-        } else if (charaX == 21 && charaY == 11) {
+        } else if (charaX == 21 && charaY == 12) {
             changeFloor(1);
             position(22, 9);
             character.gotoAndPlay("up");
         } else if (charaX == 27 && charaY == 4) {
             changeFloor(-1);
             position(27, 5);
-            character.gotoAndPlay("up");
+            character.gotoAndPlay("down");
         } else if (charaX == 26 && charaY == 4) {
             changeFloor(1);
             position(27, 3);
             character.gotoAndPlay("down");
         } else if (charaX == 62 && charaY == 7) {
+            changeFloor(-1);
+            position(61, 8);
+            character.gotoAndPlay("left");
+        } else if (charaX == 62 && charaY == 6) {
             changeFloor(1);
             position(61, 6);
             character.gotoAndPlay("left");
         } else if (charaX === 0 && charaY == 5) {
             changeFloor(1);
+            position(2, 6);
+            character.gotoAndPlay("right");
+        } else if (charaX === 0 && charaY == 6) {
+            changeFloor(-1);
             position(1, 6);
-            character.gotoAndPlay("left");
+            character.gotoAndPlay("right");
+        } else if (charaX === 42 && charaY == 12) {
+            changeFloor(1);
+            position(40, 10);
+            character.gotoAndPlay("up");
+        } else if (charaX === 41 && charaY == 12) {
+            changeFloor(-1);
+            position(40, 10);
+            character.gotoAndPlay("up");
         }
     } else if (thisfloor == 3) {
         if (charaX == 17 && charaY == 17) {
@@ -531,7 +505,7 @@ function tick(){
             character.gotoAndPlay("up");
         } else if (charaX == 21 && charaY == 14) {
             changeFloor(1);
-            position(21, 13);
+            position(21, 14);
             character.gotoAndPlay("up");
         } else if (charaX == 27 && charaY == 2) {
             changeFloor(-1);
@@ -543,12 +517,32 @@ function tick(){
             character.gotoAndPlay("down");
         } else if (charaX == 22 && charaY == 10) {
             changeFloor(-1);
-            position(21, 10);
+            position(21, 11);
             character.gotoAndPlay("up");
         } else if (charaX == 62 && charaY == 7) {
             changeFloor(1);
             position(61, 6);
             character.gotoAndPlay("left");
+        } else if (charaX == 1 && charaY == 5) {
+            changeFloor(1);
+            position(1, 9);
+            character.gotoAndPlay("right");
+        } else if (charaX == 1 && charaY == 6) {
+            changeFloor(-1);
+            position(1, 5);
+            character.gotoAndPlay("right");
+        } else if (charaX == 62 && charaY == 6) {
+            changeFloor(-1);
+            position(61, 6);
+            character.gotoAndPlay("left");
+        } else if (charaX == 62 && charaY == 5) {
+            changeFloor(1);
+            position(61, 6);
+            character.gotoAndPlay("left");
+        } else if (charaX === 40 && charaY == 11) {
+            changeFloor(-1);
+            position(42, 11);
+            character.gotoAndPlay("up");
         }
     } else if (thisfloor == 4) {
         if (charaX == 25 && charaY == 5) {
@@ -575,13 +569,29 @@ function tick(){
             changeFloor(1);
             position(29, 13);
             character.gotoAndPlay("down");
-        } else if (charaX == 21 && charaY == 14) {
+        } else if (charaX == 21 && charaY == 15) {
             changeFloor(-1);
             position(21, 15);
             character.gotoAndPlay("down");
         } else if (charaX == 62 && charaY == 7) {
             changeFloor(1);
             position(61, 6);
+            character.gotoAndPlay("left");
+        } else if (charaX === 0 && charaY == 8) {
+            changeFloor(1);
+            position(2, 17);
+            character.gotoAndPlay("right");
+        } else if (charaX === 0 && charaY == 9) {
+            changeFloor(-1);
+            position(2, 5);
+            character.gotoAndPlay("right");
+        } else if (charaX == 62 && charaY == 6) {
+            changeFloor(-1);
+            position(61, 5);
+            character.gotoAndPlay("left");
+        } else if (charaX == 62 && charaY == 5) {
+            changeFloor(1);
+            position(62, 17);
             character.gotoAndPlay("left");
         }
     } else if (thisfloor == 5) {
@@ -605,6 +615,22 @@ function tick(){
             changeFloor(1);
             position(61, 6);
             character.gotoAndPlay("left");
+        } else if (charaX == 1 && charaY == 16) {
+            changeFloor(1);
+            position(1, 10);
+            character.gotoAndPlay("right");
+        } else if (charaX == 1 && charaY == 17) {
+            changeFloor(-1);
+            position(1, 8);
+            character.gotoAndPlay("right");
+        } else if (charaX == 63 && charaY == 17) {
+            changeFloor(-1);
+            position(61, 5);
+            character.gotoAndPlay("left");
+        } else if (charaX == 63 && charaY == 16) {
+            changeFloor(1);
+            position(62, 10);
+            character.gotoAndPlay("left");
         }
     } else if (thisfloor == 6) {
         if (charaX == 29 && charaY == 5) {
@@ -613,29 +639,25 @@ function tick(){
             character.gotoAndPlay("down");
         } else if (charaX == 28 && charaY == 5) {
             changeFloor(1);
-            position(1, 1);
+            position(2, 1);
+        } else if (charaX == 63 && charaY == 10) {
+            changeFloor(-1);
+            position(62, 16);
+            character.gotoAndPlay("left");
+        } else if (charaX === 0 && charaY == 10) {
+            changeFloor(-1);
+            position(2, 16);
+            character.gotoAndPlay("right");
         }
     } else if (thisfloor == 7) {
-        // timerStart();
+        if (charaX === 1 && charaY == 1) {
+            changeFloor(-1);
+            position(28, 6);
+            character.gotoAndPlay("down");
+        }
     }
 
     stage.update();
-}
-function seven_warp() {
-    stage.removeAllChildren();
-    backgroundMap.removeAllChildren();
-    foregroundMap.removeAllChildren();
-    thisfloor = 4;
-
-    mapLowLayerData = fourthMapLowLayerData;
-    mapUpperLayerData = fourthMapUpperLayerData;
-    mapObstacleData = fourthMapObstacleData;
-
-    floorX = mapLowLayerData[0].length;
-    floorY = mapLowLayerData.length;
-
-    mapLoad();
-    position(57, 10);
 }
 
 //マップをスクロール
