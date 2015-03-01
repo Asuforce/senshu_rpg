@@ -1,10 +1,13 @@
 var stage;
 var message;
 var message_f;
-var graphics; 
+var message_audio;
+var graphics;
 var triangle1; var triangle2;
 var queue = new createjs.LoadQueue(true);
 var character;
+var audio;
+var flg = 'on';
 
 var floor_SpriteSheetField;
 var object_SpriteSheetField;
@@ -46,7 +49,7 @@ function init() {
 
     queue.addEventListener("progress", progressLoad);
     queue.loadManifest(manifest);                        //データを取得するときはquere.getResult()
-    queue.addEventListener("complete", mapLoad);    
+    queue.addEventListener("complete", mapLoad);
 
     //三角形表示
     graphics = new createjs.Graphics();
@@ -59,6 +62,7 @@ function init() {
         .closePath();
 
     triangle1 = new createjs.Shape(graphics);
+    button1  = new createjs.Shape(graphics);
 
     graphics = new createjs.Graphics();
     graphics.beginStroke("#aaaaaa"); // 色の指定（線と塗りつぶしとそれぞれ色を指定する）
@@ -70,10 +74,12 @@ function init() {
         .closePath();
 
     triangle2 = new createjs.Shape(graphics);
+    button2  = new createjs.Shape(graphics);
 
-    var myPlayer = document.getElementById('musicplayer');
-    myPlayer.loop = true;
-    myPlayer.play()
+    audio = new Audio();
+    audio.src = 'music.mp3';
+    audio.loop = true;
+    audio.play();
     //console.log(myPlayer.currentTime);
 }
 
@@ -85,7 +91,7 @@ function progressLoad(event){
 
 function mapLoad(event){
     if (firstload) {
-    	floorX = 64;
+        floorX = 64;
         floorY = 44;
 
         mapLowLayerData = firstMapLowLayerData;
@@ -159,7 +165,7 @@ function mapLoad(event){
     x = 0; y = 0;
     while (y < floorY){
         while (x < floorX){
-           if (mapUpperLayerData[y][x] < 30) {
+           if (mapUpperLayerData[y][x] < 40) {
                var map = object_SpriteSheetField.clone();
                map.setTransform(x*dot, y*dot);
                map.gotoAndStop(mapUpperLayerData[y][x]);
@@ -169,7 +175,7 @@ function mapLoad(event){
         }
         x = 0;
         y += 1;
-    }       
+    }
     stage.addChild(backgroundMap);
     stage.addChild(foregroundMap);
     stage.addChild(character);
@@ -183,6 +189,38 @@ function mapLoad(event){
     stage.addChild(triangle1);
     stage.addChild(triangle2);
     stage.addChild(message_f);
+
+    button1.x = myCanvas.width-220; button1.y = myCanvas.height-40;
+    button2.x = myCanvas.width-230; button2.y = myCanvas.height-40;
+
+    message_audio = new createjs.Text("BGM:"+flg, "20px serif", "#ffffff");
+    message_audio.x = myCanvas.width-230; message_audio.y = myCanvas.height-45;
+
+    stage.addChild(button1);
+    stage.addChild(button2);
+    stage.addChild(message_audio);
+
+    button1.addEventListener('click', handleEvent);
+    button2.addEventListener('click', handleEvent);
+    message_audio.addEventListener('click', handleEvent);
+    flg = 'off';
+}
+
+function handleEvent(e) {
+    stage.removeChild(message_audio);
+    if(flg == 'on') {
+        audio.loop = true;
+        audio.play();
+        message_audio = new createjs.Text("BGM:"+flg, "20px serif", "#ffffff");
+        message_audio.x = myCanvas.width-230; message_audio.y = myCanvas.height-45;
+        flg = 'off';
+    } else {
+        audio.pause();
+        message_audio = new createjs.Text("BGM:"+flg, "20px serif", "#ffffff");
+        message_audio.x = myCanvas.width-230; message_audio.y = myCanvas.height-45;
+        flg = 'on';
+    }
+    stage.addChild(message_audio);
 }
 
 function changeFloor(cnt) {
@@ -324,7 +362,7 @@ function tick(){
                 character.gotoAndPlay("right");
                 prevDirection = 3;
             }
-            if (charaX < floorX-1 && mapObstacleData[y][x+1] === 0) { 
+            if (charaX < floorX-1 && mapObstacleData[y][x+1] === 0) {
                 direction = 3;
             }
         }
@@ -344,11 +382,11 @@ function tick(){
 
     // 階数条件分岐
     if (thisfloor == 1) {
-    	if (charaX == 19 && charaY == 36) {
-    		changeFloor(1);
-	        position(19, 28);
-    	    character.gotoAndPlay("up");
-    	} else if (charaX == 18 && charaY == 15) {
+        if (charaX == 19 && charaY == 36) {
+            changeFloor(1);
+            position(19, 28);
+            character.gotoAndPlay("up");
+        } else if (charaX == 18 && charaY == 15) {
             changeFloor(1);
             position(18, 10);
             character.gotoAndPlay("up");
@@ -356,24 +394,32 @@ function tick(){
             changeFloor(1);
             position(27, 5);
             character.gotoAndPlay("down");
-        };
+        } else if (charaX == 62 && charaY == 7) {
+            changeFloor(1);
+            position(61, 6);
+            character.gotoAndPlay("left");
+        } else if (charaX === 0 && charaY == 6) {
+            changeFloor(1);
+            position(1, 5);
+            character.gotoAndPlay("left");
+        }
     } else if (thisfloor == 2) {
-    	if (charaX == 18 && charaY == 29) {
-    		changeFloor(-1);
-	        position(18, 37);
-    	    character.gotoAndPlay("down");
-    	} else if (charaX == 19 && charaY == 25) {
-    	    changeFloor(1);
-        	position(18, 16);
-        	character.gotoAndPlay("up");
-    	} else if (charaX == 18 && charaY == 11) {
+        if (charaX == 18 && charaY == 29) {
+            changeFloor(-1);
+            position(18, 37);
+            character.gotoAndPlay("down");
+        } else if (charaX == 19 && charaY == 25) {
+            changeFloor(1);
+            position(18, 16);
+            character.gotoAndPlay("up");
+        } else if (charaX == 18 && charaY == 11) {
             changeFloor(-1);
             position(18, 16);
-            character.gotoAndPlay("down")
+            character.gotoAndPlay("down");
         } else if (charaX == 21 && charaY == 11) {
             changeFloor(1);
             position(22, 9);
-            character.gotoAndPlay("up")
+            character.gotoAndPlay("up");
         } else if (charaX == 27 && charaY == 4) {
             changeFloor(-1);
             position(27, 5);
@@ -382,20 +428,28 @@ function tick(){
             changeFloor(1);
             position(27, 3);
             character.gotoAndPlay("down");
-        };
+        } else if (charaX == 62 && charaY == 7) {
+            changeFloor(1);
+            position(61, 6);
+            character.gotoAndPlay("left");
+        } else if (charaX === 0 && charaY == 5) {
+            changeFloor(1);
+            position(1, 6);
+            character.gotoAndPlay("left");
+        }
     } else if (thisfloor == 3) {
-    	if (charaX == 17 && charaY == 17) {
-    		changeFloor(-1);
-	        position(18, 25);
-    	    character.gotoAndPlay("down");
-    	} else if (charaX == 18 && charaY == 14) {
-	        changeFloor(1);
-    	    position(19, 12);
-        	character.gotoAndPlay("up");
-    	} else if (charaX == 21 && charaY == 14) {
+        if (charaX == 17 && charaY == 17) {
+            changeFloor(-1);
+            position(18, 25);
+            character.gotoAndPlay("down");
+        } else if (charaX == 18 && charaY == 14) {
+            changeFloor(1);
+            position(19, 12);
+            character.gotoAndPlay("up");
+        } else if (charaX == 21 && charaY == 14) {
             changeFloor(1);
             position(21, 13);
-            character.gotoAndPlay("up")
+            character.gotoAndPlay("up");
         } else if (charaX == 27 && charaY == 2) {
             changeFloor(-1);
             position(26, 5);
@@ -408,25 +462,29 @@ function tick(){
             changeFloor(-1);
             position(21, 10);
             character.gotoAndPlay("up");
-        };
+        } else if (charaX == 62 && charaY == 7) {
+            changeFloor(1);
+            position(61, 6);
+            character.gotoAndPlay("left");
+        }
     } else if (thisfloor == 4) {
-    	if (charaX == 25 && charaY == 5) {
-    		mapObstacleData = fourthMapObstacleData2;
-    	} else if (charaX == 25 && charaY == 6 || charaX == 24 && charaY == 5) {
-    		mapObstacleData = fourthMapObstacleData;
-    	} else if (charaX == 18 && charaY == 13) {
-    		changeFloor(-1);
-	        position(17, 15);
-    	    character.gotoAndPlay("down");
-    	} else if (charaX == 19 && charaY == 5) {
-       		changeFloor(1);
-        	position(19, 5);
-        	character.gotoAndPlay("up");
-		} else if ((charaX == 22 || charaX == 23 || charaX == 24) && charaY == 1) {
-			changeFloor(1);
-        	position(23, 7);
-        	character.gotoAndPlay("up");	
-		} else if (charaX == 29 && charaY == 5) {
+        if (charaX == 25 && charaY == 5) {
+            mapObstacleData = fourthMapObstacleData2;
+        } else if (charaX == 25 && charaY == 6 || charaX == 24 && charaY == 5) {
+            mapObstacleData = fourthMapObstacleData;
+        } else if (charaX == 18 && charaY == 13) {
+            changeFloor(-1);
+            position(17, 15);
+            character.gotoAndPlay("down");
+        } else if (charaX == 19 && charaY == 5) {
+            changeFloor(1);
+            position(19, 5);
+            character.gotoAndPlay("up");
+        } else if ((charaX == 22 || charaX == 23 || charaX == 24) && charaY == 1) {
+            changeFloor(1);
+            position(23, 7);
+            character.gotoAndPlay("up");
+        } else if (charaX == 29 && charaY == 5) {
             changeFloor(-1);
             position(26, 3);
             character.gotoAndPlay("down");
@@ -438,17 +496,21 @@ function tick(){
             changeFloor(-1);
             position(21, 15);
             character.gotoAndPlay("down");
-        };
+        } else if (charaX == 62 && charaY == 7) {
+            changeFloor(1);
+            position(61, 6);
+            character.gotoAndPlay("left");
+        }
     } else if (thisfloor == 5) {
-    	if ((charaX == 22 || charaX == 23 || charaX == 24) && (charaY == 3 || charaY == 7)) {
-    		mapObstacleData = fifthMapObstacleData2;
-    	} else if ((charaX == 19 || charaX == 20 || charaX == 21) && charaY == 3) {
-    		mapObstacleData = fifthMapObstacleData;
-    	} else if ((charaX == 22 || charaX == 23 || charaX == 24) && charaY == 8) {
-    		changeFloor(-1);
-    		position(23, 2);
-    		character.gotoAndPlay("down")
-    	} else if (charaX == 29 && charaY == 12) {
+        if ((charaX == 22 || charaX == 23 || charaX == 24) && (charaY == 3 || charaY == 7)) {
+            mapObstacleData = fifthMapObstacleData2;
+        } else if ((charaX == 19 || charaX == 20 || charaX == 21) && charaY == 3) {
+            mapObstacleData = fifthMapObstacleData;
+        } else if ((charaX == 22 || charaX == 23 || charaX == 24) && charaY == 8) {
+            changeFloor(-1);
+            position(23, 2);
+            character.gotoAndPlay("down");
+        } else if (charaX == 29 && charaY == 12) {
             changeFloor(-1);
             position(28, 6);
             character.gotoAndPlay("down");
@@ -456,7 +518,11 @@ function tick(){
             changeFloor(1);
             position(29, 6);
             character.gotoAndPlay("down");
-        };
+        } else if (charaX == 62 && charaY == 7) {
+            changeFloor(1);
+            position(61, 6);
+            character.gotoAndPlay("left");
+        }
     } else if (thisfloor == 6) {
         if (charaX == 29 && charaY == 5) {
             changeFloor(-1);
@@ -465,8 +531,8 @@ function tick(){
         } else if (charaX == 28 && charaY == 5) {
             changeFloor(1);
             position(1, 1);
-        };
-    };
+        }
+    }
 
     stage.update();
 }
