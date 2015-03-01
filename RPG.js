@@ -7,7 +7,9 @@ var triangle1; var triangle2;
 var queue = new createjs.LoadQueue(true);
 var character;
 var audio;
-var flg = 'on';
+var flg = 'On';
+var timeout_id = null;
+
 
 var floor_SpriteSheetField;
 var object_SpriteSheetField;
@@ -29,6 +31,88 @@ var thisfloor = 1;
 var floorX, floorY;
 var firstload = true;
 var dot = 32;
+
+window.requestAnimationFrame = (function() {
+  return window.requestAnimationFrame ||
+  window.webkitRequestAnimationFrame ||
+  window.mozRequestAnimationFrame ||
+  window.msRequestAnimationFrame ||
+  window.oRequestAnimationFrame ||
+  function(f) { return window.setTimeout(f, 1000 / 60); };
+}());
+
+window.cancelAnimationFrame = (function() {
+  return window.cancelAnimationFrame ||
+  window.cancelRequestAnimationFrame ||
+  window.webkitCancelAnimationFrame ||
+  window.webkitCancelRequestAnimationFrame ||
+  window.mozCancelAnimationFrame ||
+  window.mozCancelRequestAnimationFrame ||
+  window.msCancelAnimationFrame ||
+  window.msCancelRequestAnimationFrame ||
+  window.oCancelAnimationFrame ||
+  window.oCancelRequestAnimationFrame ||
+  function(id) { window.clearTimeout(id); };
+}());
+
+var now = window.performance && (
+  performance.now || performance.mozNow || performance.msNow ||
+  performance.oNow || performance.webkitNow
+  );
+
+window.getTime = function() {
+  return (now && now.call(performance)) ||
+  (new Date().getTime());
+};
+
+var timeMax = 5000; // 15秒
+var percent = 0;
+var aTimer = null;
+var aTimeSum = 0;
+var aTimeOld = 0;
+
+// タイマーを進行させる
+var timerUpdate = function() {
+  percent = Math.floor((aTimeSum / timeMax) * 100);
+  if (percent == 100) {
+    seven_warp();
+    timerReset();
+  }
+};
+
+// タイマーをループさせる
+var timerLoop = function() {
+  var now = getTime();
+  aTimeSum += (now - aTimeOld);
+  aTimeOld = now;
+
+  timerUpdate();
+  if (aTimer) {
+    aTimer = requestAnimationFrame(timerLoop);
+  }
+};
+
+// タイマー開始
+var timerStart = function() {
+    console.log('start');
+  aTimeOld = getTime();
+  timerLoop();
+};
+
+var timerStop = function() {
+  if (aTimer) {
+    cancelAnimationFrame(aTimer);
+    aTimer = null;
+  }
+};
+
+
+// タイマーリセット
+var timerReset = function() {
+  timerStop();
+  aTimeSum = 0;
+  percent = 0;
+};
 
 window.onload = init;
 
@@ -203,22 +287,22 @@ function mapLoad(event){
     button1.addEventListener('click', handleEvent);
     button2.addEventListener('click', handleEvent);
     message_audio.addEventListener('click', handleEvent);
-    flg = 'off';
+    flg = 'Off';
 }
 
 function handleEvent(e) {
     stage.removeChild(message_audio);
-    if(flg == 'on') {
+    if(flg == 'On') {
         audio.loop = true;
         audio.play();
         message_audio = new createjs.Text("BGM:"+flg, "20px serif", "#ffffff");
         message_audio.x = myCanvas.width-230; message_audio.y = myCanvas.height-45;
-        flg = 'off';
+        flg = 'Off';
     } else {
         audio.pause();
         message_audio = new createjs.Text("BGM:"+flg, "20px serif", "#ffffff");
         message_audio.x = myCanvas.width-230; message_audio.y = myCanvas.height-45;
-        flg = 'on';
+        flg = 'On';
     }
     stage.addChild(message_audio);
 }
@@ -279,7 +363,6 @@ function changeFloor(cnt) {
 }
 
 function position(posX, posY) {
-    console.log("thisfloor is " + thisfloor);
     charaX = posX;
     charaY = posY;
     prevDirection = 4; //エリア移動した直後の向き矯正
@@ -400,7 +483,7 @@ function tick(){
             character.gotoAndPlay("left");
         } else if (charaX === 0 && charaY == 6) {
             changeFloor(1);
-            position(1, 5);
+            position(1, 6);
             character.gotoAndPlay("left");
         }
     } else if (thisfloor == 2) {
@@ -532,9 +615,27 @@ function tick(){
             changeFloor(1);
             position(1, 1);
         }
+    } else if (thisfloor == 7) {
+        // timerStart();
     }
 
     stage.update();
+}
+function seven_warp() {
+    stage.removeAllChildren();
+    backgroundMap.removeAllChildren();
+    foregroundMap.removeAllChildren();
+    thisfloor = 4;
+
+    mapLowLayerData = fourthMapLowLayerData;
+    mapUpperLayerData = fourthMapUpperLayerData;
+    mapObstacleData = fourthMapObstacleData;
+
+    floorX = mapLowLayerData[0].length;
+    floorY = mapLowLayerData.length;
+
+    mapLoad();
+    position(57, 10);
 }
 
 //マップをスクロール
