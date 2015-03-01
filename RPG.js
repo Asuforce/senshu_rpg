@@ -14,8 +14,7 @@ var prevDirection = 4;
 var direction = 4; //歩いていく方向 （0～3：下上左右  4:止）
 var keyFlags = [false, false, false, false];
 var charaX = 0, charaY = 0;
-var CHARA_SPEED = 16;
-var i = 0;
+var CHARA_SPEED = 1/4;
 var mapData;
 var mapLowLayerData;
 var mapUpperLayerData;
@@ -24,13 +23,13 @@ var mapObstacleData;
 var thisfloor = 1;
 var floorX = 64, floorY;
 var firstload = true;
+var dot = 32;
 
 window.onload = init;
 
 function init() {
     var myCanvas = document.getElementById('myCanvas');
     stage = new createjs.Stage(myCanvas);
-    position(10, 10);
     message = new createjs.Text("Now Loading... ", "24px Arial", "#ffffff");
     stage.addChild(message);
     message.x = 50; message.y = 100;
@@ -44,7 +43,7 @@ function init() {
     ];
 
     queue.addEventListener("progress", progressLoad);
-    queue.loadManifest(manifest);                              //データを取得するときはquere.getResult()
+    queue.loadManifest(manifest);                        //データを取得するときはquere.getResult()
     queue.addEventListener("complete", mapLoad);      //loadManifestが終わったら実行される
 }
 
@@ -66,21 +65,21 @@ function mapLoad(event){
         //一番下にくるマップ用スプライトシート作成
         var floor_SpriteSheet = new createjs.SpriteSheet({
             images: [queue.getResult("floor")],
-            frames: { width: 32, height: 32 }
+            frames: { width: dot, height: dot }
         });
         floor_SpriteSheetField = new createjs.BitmapAnimation(floor_SpriteSheet);
 
         //マップ上に配置するチップ用スプライトシート作成
         var object_SpriteSheet = new createjs.SpriteSheet({
             images: [queue.getResult("object")],
-            frames: { width: 32, height: 32 }
+            frames: { width: dot, height: dot }
         });
         object_SpriteSheetField = new createjs.BitmapAnimation(object_SpriteSheet);
 
         //操作キャラアニメーション用のスプライトシートを作成
         charaSpriteSheet = new createjs.SpriteSheet({
             images: [queue.getResult("character")],
-            frames: { width:32, height:32 },
+            frames: { width: dot, height: dot },
             animations: {
                 down: { frames: [1, 0, 2], frequency: 10 },
                 up: { frames: [4, 3, 5], frequency: 10 },
@@ -89,6 +88,7 @@ function mapLoad(event){
             }
         });
         character = new createjs.BitmapAnimation(charaSpriteSheet);
+        character.gotoAndPlay("up");
 
         //アニメーションさせるキャラの最初の座標を設定
         character.x = 224;
@@ -104,6 +104,7 @@ function mapLoad(event){
         document.addEventListener('keyup', handleKeyUp, false);
 
         stage.removeChild(message);
+        position(9, 43);
         firstload = false;
     }
 
@@ -113,7 +114,7 @@ function mapLoad(event){
         while (x < floorX){
            if (mapData[y][x] < 5) {
                var map = floor_SpriteSheetField.clone();
-               map.setTransform(x*32, y*32);
+               map.setTransform(x*dot, y*dot);
                map.gotoAndStop(mapData[y][x]);
                backgroundMap.addChild(map);
                x += 1;
@@ -129,7 +130,7 @@ function mapLoad(event){
         while (x < floorX){
             if (mapLowLayerData[y][x] < 256) {
                 var map = floor_SpriteSheetField.clone();
-                map.setTransform(x*32, y*32);
+                map.setTransform(x*dot, y*dot);
                 map.gotoAndStop(mapLowLayerData[y][x]);
                 backgroundMap.addChild(map);
                 x += 1;
@@ -147,7 +148,7 @@ function mapLoad(event){
         while (x < floorX){
            if (mapUpperLayerData[y][x] < 256) {
                var map = object_SpriteSheetField.clone();
-               map.setTransform(x*32, y*32);
+               map.setTransform(x*dot, y*dot);
                map.gotoAndStop(mapUpperLayerData[y][x]);
                //foregroundMap.addChild(map);
                x += 1;
@@ -159,7 +160,6 @@ function mapLoad(event){
     stage.addChild(foregroundMap);
 
     stage.addChild(character);
-    character.gotoAndPlay("down");
 }
 
 function changeFloor(cnt) {
@@ -229,13 +229,10 @@ function changeFloor(cnt) {
 }
 
 function position(posX, posY) {
-    posX *= 32; posY *= 32;
-    charaX = 224+posX;
-    charaY = 224+posY;
-    backgroundMap.x = -posX;
-    backgroundMap.y = -posY;
-    foregroundMap.x = -posX;
-    foregroundMap.y = -posY;
+    console.log("thisfloor is " + thisfloor);
+    charaX = posX;
+    charaY = posY;
+    moveMap();
 }
 
 //キーボードのキーが押された時の処理
@@ -248,6 +245,18 @@ function handleKeyDown(event) {
         keyFlags[2] = true;
     } else if (event.keyCode==39 || event.keyCode==68) {//→ d ボタン
         keyFlags[3] = true;
+    }
+    // スピード調整 歩いてない時のみ
+    if (charaX % 1 === 0 && charaY % 1 === 0) {
+        if (event.keyCode==49) {//1
+            CHARA_SPEED = 1/16;
+        } else if (event.keyCode==50) {//2
+            CHARA_SPEED = 1/8;
+        } else if (event.keyCode==51) {//3
+            CHARA_SPEED = 1/4;
+        } else if (event.keyCode==52) {//4
+            CHARA_SPEED = 1/2;
+        }
     }
 }
 
@@ -265,12 +274,12 @@ function handleKeyUp(event) {
 }
 
 function tick(){
-    if (charaX % 32 === 0 && ((charaY) % 32) === 0) { //+16は操作キャラの32ドット超の部分
+    if (charaX % 1 === 0 && ((charaY) % 1) === 0) { //+16は操作キャラの32ドット超の部分
         direction = 4; //止まる
 
         //とりあえずこの方法で勇者座標から配列インデックスを設定
-        var x = Math.floor(charaX/32);
-        var y = Math.floor(charaY/32); //+16は操作キャラの32ドット超の分
+        var x = Math.floor(charaX);
+        var y = Math.floor(charaY); //+16は操作キャラの32ドット超の分
         //↑Math.floorで小数点以下切り捨て
 
         if(keyFlags[0]) { //↓ s ボタン
@@ -278,9 +287,7 @@ function tick(){
                 character.gotoAndPlay("down");
                 prevDirection = 0;
             }
-            if (charaY < (1408-32) && mapObstacleData[y+1][x] === 0){
-                //↑縦35マス×32ドットの1120から移動スピード8を差し引いた1112
-                //そこからさらにキャラクタの高さ分の48を差し引いた　1112-48
+            if (charaY < (1408-dot) && mapObstacleData[y+1][x] === 0){
                 direction = 0;
             }
         } else if (keyFlags[1]) { //↑ w ボタン
@@ -296,7 +303,7 @@ function tick(){
                 character.gotoAndPlay("left");
                 prevDirection = 2;
             }
-            if (charaX >= 4 && mapObstacleData[y][x-1] === 0) {
+            if (charaX > 0 && mapObstacleData[y][x-1] === 0) {
                 direction = 2;
             }
         } else if (keyFlags[3]) { //→ d ボタン
@@ -304,7 +311,7 @@ function tick(){
                 character.gotoAndPlay("right");
                 prevDirection = 3;
             }
-            if (charaX <= 2048-32 && mapObstacleData[y][x+1] === 0) { //32はキャラクタ幅
+            if (charaX <= 2048-dot && mapObstacleData[y][x+1] === 0) { //dotはキャラクタ幅
                 //↑横34マス×32ドットの1088から移動スピード8を差し引いた1080
                 //そこからさらにキャラクタの幅の32を差し引いた　1080-32
                 direction = 3;
@@ -325,12 +332,14 @@ function tick(){
     if (direction < 4) moveMap(); //マップをスクロール
 
     // 階数条件分岐
-    if (charaX == 480 && charaY == 736 && thisfloor == 1) {
+    if (charaX == 19 && charaY == 36 && thisfloor == 1) {
         changeFloor(1);
-        position(10, 4);
-    } else if (charaX == 480 && charaY == 736 && thisfloor == 2) {
-        changeFloor(1);
-        position(10, 4);
+        position(19, 28);
+        character.gotoAndPlay("up");
+    } else if (charaX == 18 && charaY == 29 && thisfloor == 2) {
+        changeFloor(-1);
+        position(18, 37);
+        character.gotoAndPlay("down");
     }
 
     stage.update();
@@ -338,18 +347,13 @@ function tick(){
 
 //マップをスクロール
 function moveMap() {
-    backgroundMap.x = (480-32)/2-charaX;
-    backgroundMap.y = (480-32)/2-charaY;
-    foregroundMap.x = (480-32)/2-charaX;
-    foregroundMap.y = (480-32)/2-charaY;
-    /*
-    i++;
-    if (i == 2) {
-   	//console.log("backgroundMap x:",backgroundMap.x,"backgroundMap y:", backgroundMap.y);
-	//console.log("foregroundMap x:",foregroundMap.x,"foregroundMap.y:",foregroundMap.y);
-	//console.log("character x:", charaX, "character y:", charaY);
-	//console.log(queue);
-	i = 0;
+    backgroundMap.x = character.x-charaX*dot;
+    backgroundMap.y = character.y-charaY*dot;
+    foregroundMap.x = character.x-charaX*dot;
+    foregroundMap.y = character.y-charaY*dot;
+    if (charaX % 1 === 0 && ((charaY) % 1) === 0) {
+        //console.log("backgroundMap x:",backgroundMap.x/dot,"backgroundMap y:", backgroundMap.y/dot);
+        //console.log("foregroundMap x:",foregroundMap.x/dot,"foregroundMap.y:",foregroundMap.y/dot);
+        console.log("charaX:", charaX, "charaY:", charaY);
     }
-    */
 }
